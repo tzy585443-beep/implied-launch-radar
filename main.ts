@@ -5,7 +5,7 @@
 // dashboard/ and screenshots/, and dossier.json last.
 //
 //   node main.ts
-//   node main.ts --input docs/input-reference/snapshot.json --output out
+//   node main.ts --input <snapshot.json> --output out
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -33,7 +33,10 @@ function resolveInput(): string {
   const explicit = arg('input', '');
   if (explicit) return explicit.endsWith('.json') ? explicit : join(explicit, 'snapshot.json');
   if (existsSync('/input/snapshot.json')) return '/input/snapshot.json';
-  return join(here, 'docs', 'input-reference', 'snapshot.json');
+  // A checkout that still has the old local copy can use it. This tree does not ship one.
+  const bundled = join(here, 'docs', 'input-reference', 'snapshot.json');
+  if (existsSync(bundled)) return bundled;
+  return '/input/snapshot.json';
 }
 
 function copyFiles(from: string, to: string): string[] {
