@@ -1,12 +1,16 @@
 // Local gate check for the lantern entry. Not part of the graded program.
 import { spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildDossier } from '../vendor/makefun-board.ts';
 import { boardIssue, parseSnapshot } from '../lib/model.ts';
 
 const root = new URL('..', import.meta.url).pathname;
-const snapPath = join(root, 'docs/input-reference/snapshot.json');
+const snapPath = process.argv[2] || process.env.SNAPSHOT || join(root, 'docs/input-reference/snapshot.json');
+if (!existsSync(snapPath)) {
+  console.error(`selfcheck: no snapshot at ${snapPath}. Pass a snapshot path. This repository does not ship one; the grader mounts /input/snapshot.json.`);
+  process.exit(2);
+}
 const a = '/tmp/lantern-check-a';
 const b = '/tmp/lantern-check-b';
 
