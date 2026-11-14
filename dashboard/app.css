@@ -104,17 +104,32 @@ h1 {
 .stat span { color: var(--ink-soft); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
 
 .method {
-  margin: 12px 0;
-  padding: 10px 12px;
+  margin: 10px 0;
+  padding: 8px 12px;
   background: var(--paper-2);
   border-left: 3px solid var(--brass);
 }
+.method.tight { margin: 8px 0; padding: 6px 12px; }
+.top.slim { align-items: center; padding-bottom: 8px; }
+.top.slim .lede, .top.slim .kicker { display: none; }
+.top.slim h1 { font-size: 22px; }
+.top.slim .stats { display: none; }
 .formula {
   font-family: var(--mono);
   font-size: 13px;
   margin-bottom: 6px;
 }
-.method p { color: var(--ink-soft); font-size: 13px; max-width: 110ch; }
+.method p { color: var(--ink-soft); font-size: 12.5px; line-height: 1.4; max-width: 120ch; }
+.peers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.peer-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+}
+.count.on { color: var(--brass-deep); font-weight: 600; }
 .runline { margin-top: 6px; font-family: var(--mono); font-size: 12px; color: var(--ink); }
 
 .tabs { display: flex; gap: 0; margin: 0 0 10px; }
@@ -165,7 +180,9 @@ input[type="search"] { width: 200px; }
 .count { color: var(--ink-soft); font-size: 13px; margin: 2px 0 8px; }
 
 table { width: 100%; border-collapse: collapse; background: var(--paper-2); }
-th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td { font-size: 13px; }
+td.num, th.num { white-space: nowrap; }
 th {
   font-family: var(--mono);
   font-size: 10px;
@@ -217,8 +234,8 @@ tr.click:hover { background: #faf6ee; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.detail-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin: 8px 0 12px; }
-.detail-head h2 { font-family: var(--serif); font-size: 28px; font-weight: 400; letter-spacing: -0.02em; }
+.detail-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin: 4px 0 8px; }
+.detail-head h2 { font-family: var(--serif); font-size: 26px; font-weight: 400; letter-spacing: -0.02em; }
 .meta { color: var(--ink-soft); margin-top: 4px; }
 .tag {
   display: inline-block;
@@ -267,12 +284,12 @@ tr.click:hover { background: #faf6ee; }
 .plan ol { margin: 0; padding: 0; list-style: none; }
 .plan li {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 1fr);
   gap: 6px;
-  padding: 6px 0;
+  padding: 4px 0;
   border-top: 1px solid var(--line);
-  font-size: 12.5px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.32;
 }
 .plan .n { font-family: var(--mono); color: var(--brass); }
 

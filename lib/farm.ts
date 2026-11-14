@@ -7,6 +7,7 @@ export interface FarmInput {
   category: string | null;
   chains: string[];
   tvl_usd: number;
+  change_7d: number | null;
   age_days: number | null;
 }
 
@@ -90,6 +91,15 @@ function book(n: number): string {
   if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(n)}`;
+}
+
+function weekMove(change: number | null): string {
+  if (change === null || !Number.isFinite(change)) return 'Its seven-day TVL change is unreported, so the probe stays at the size below.';
+  const sign = change > 0 ? '+' : '';
+  const pct = `${sign}${change.toFixed(1)}%`;
+  if (change <= -15) return `TVL moved ${pct} over seven days, a real drawdown, so do not add size beyond this probe.`;
+  if (change >= 20) return `TVL moved ${pct} over seven days. Keep the probe at this size anyway; a fast week is not a reason to scale up.`;
+  return `TVL moved ${pct} over seven days.`;
 }
 
 function assetOf(family: Family, chain: string): string {
@@ -240,7 +250,7 @@ export function farmSteps(p: FarmInput): string[] {
 
   const steps = [
     pack(
-      `Fund a wallet used only for ${p.name}. Put ${money(purse)} on ${chain} (${money(capital)} for the first position and ${money(addon)} left idle until day 7) and keep ${money(float)} aside for gas. Store the seed offline. The book is ${book(p.tvl_usd)} and the protocol records no token.`,
+      `Fund a wallet used only for ${p.name}. Put ${money(purse)} on ${chain} (${money(capital)} for the first position and ${money(addon)} left idle until day 7) and keep ${money(float)} aside for gas. Store the seed offline. The book is ${book(p.tvl_usd)} across ${p.chains.length || 1} chain${p.chains.length === 1 ? '' : 's'} and the protocol records no token. ${weekMove(p.change_7d)}`,
       `${money(purse)} of capital and a ${money(float)} gas float`,
       '20 minutes',
     ),

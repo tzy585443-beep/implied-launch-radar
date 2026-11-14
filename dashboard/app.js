@@ -15,6 +15,7 @@
     rank: 1,
     name: 1,
     category: 1,
+    primary_chain: 1,
     tvl_usd: 1,
     change_7d: 1,
     age_days: 1,
@@ -44,7 +45,7 @@
   }
 
   function modelText() {
-    return 'peerMultiple is the median market-cap / TVL of protocols in the same category whose token already trades. Each ratio is winsorized, shrunk toward the global median by n/(n+k), then clamped. growthMult scales the clamped seven-day TVL change; a missing change is flat. maturityMult is a Gaussian of years listed with no token recorded, highest a little past one year and lower for a brand-new listing or one untokenized for many years. chainMult adds breadth for extra chains and a shrunk primary-chain quality. A recorded market cap, symbol, or CoinGecko id keeps a protocol off this board; those protocols are the comparables that set the multiples. CEX, bridge, liquid staking, liquid restaking, restaked BTC, version-marker names, and wrapped, staked, or exchange-branded names are skipped by rule, never by a list of names.';
+    return 'peerMultiple is the winsorized median market-cap / TVL of live tokens in that category, shrunk toward the global median by n/(n+k), then clamped. growthMult scales the clamped seven-day TVL change; a missing change is flat. maturityMult is a Gaussian of years listed with no token recorded, peaking just past a year. chainMult is extra-chain breadth times a shrunk primary-chain quality. A recorded market cap, symbol, or CoinGecko id stays off this board and prices the multiples. CEX, bridge, liquid staking, liquid restaking, restaked BTC, version-marker names, and wrapped, staked, or exchange-branded names are skipped by rule.';
   }
 
   function runLine() {
@@ -59,18 +60,15 @@
 
   function skipLine() {
     var s = DATA.skipped;
-    var parts = [];
-    function add(n, label) { if (n) parts.push(n + ' ' + label); }
-    add(s.cex, 'CEX');
-    add(s.bridge, 'bridge');
-    add(s.liquid_staking, 'liquid staking');
-    add(s.liquid_restaking, 'liquid restaking');
-    add(s.restaked_btc, 'restaked BTC');
-    add(s.versioned, 'versioned names');
-    add(s.wrapped_or_staked_name, 'wrapped or staked names');
-    add(s.exchange_name, 'exchange-branded');
-    return s.total + ' pre-token protocols are off the board (' + parts.join(', ') + '). ' +
-      DATA.token_recorded + ' protocols that record a token are comparables, not rows.';
+    return 'Skipped by rule: ' + s.cex + ' CEX, ' + s.bridge + ' bridge, ' + s.liquid_staking + ' liquid staking, ' +
+      s.liquid_restaking + ' liquid restaking, ' + s.restaked_btc + ' restaked BTC, ' + s.versioned + ' versioned, ' +
+      s.wrapped_or_staked_name + ' wrapped or staked. ' + DATA.token_recorded + ' recorded tokens stay off the board.';
+  }
+
+  function peerStrip() {
+    return h('div', { class: 'peers' }, DATA.categories.slice(0, 6).map(function (c) {
+      return h('span', { class: 'peer-chip', text: c.category + ' ' + c.multiple.toFixed(2) + '×  n=' + c.peers });
+    }));
   }
 
   function peerNote(row) {
@@ -108,7 +106,7 @@
   function chainNote(row) {
     var n = row.chains.length;
     var where = n ? n + ' chain' + (n === 1 ? '' : 's') + ', primary ' + row.primary_chain : 'No chain is listed';
-    return where + '. Breadth ' + row.chain_breadth + '×, primary-chain quality ' + row.chain_quality + '×, combined chain factor ' + row.chain_multiplier + '×.';
+    return where + '. Breadth ' + row.chain_breadth.toFixed(4) + '×, primary-chain quality ' + row.chain_quality.toFixed(4) + '×, combined chain factor ' + row.chain_multiplier.toFixed(4) + '×.';
   }
 
   function fmtUsd(n) {
@@ -198,7 +196,7 @@
     var dir = state.dir;
     var av;
     var bv;
-    if (key === 'name' || key === 'category') {
+    if (key === 'name' || key === 'category' || key === 'primary_chain') {
       av = (a[key] || '').toLowerCase();
       bv = (b[key] || '').toLowerCase();
       if (av < bv) return -dir;
@@ -291,15 +289,15 @@
 
   function setSort(key) {
     if (state.sort === key) go({ sort: key, dir: -state.dir });
-    else go({ sort: key, dir: key === 'name' || key === 'category' || key === 'rank' ? 1 : -1 });
+    else go({ sort: key, dir: key === 'name' || key === 'category' || key === 'rank' || key === 'primary_chain' ? 1 : -1 });
   }
 
   function option(value, label, selected) {
     return h('option', { value: value, selected: selected, text: label });
   }
 
-  function header() {
-    return h('header', { class: 'top' },
+  function header(slim) {
+    return h('header', { class: slim ? 'top slim' : 'top' },
       h('div', { class: 'brand' },
         h('div', { class: 'lantern', 'aria-hidden': 'true' }),
         h('div', null,
@@ -326,7 +324,8 @@
       h('p', { class: 'formula', text: 'implied = round(TVL × peerMultiple × growthMult × maturityMult × chainMult)' }),
       h('p', { text: modelText() }),
       h('p', { class: 'runline', text: runLine() }),
-      h('p', { class: 'runline', text: skipLine() })
+      h('p', { class: 'runline', text: skipLine() }),
+      peerStrip()
     );
   }
 
@@ -402,8 +401,8 @@
     if (state.growth === 'down') bits.push('TVL down over 7 days');
     if (state.growth === 'hot') bits.push('TVL up 5% or more');
     if (state.growth === 'cold') bits.push('TVL down 5% or more');
-    var what = bits.length ? bits.join(', ') : 'all categories, chains, and cohorts';
-    return n + ' of ' + DATA.board_size + ' protocols — ' + what + '. Rank is the model order; sorting does not reassign it.';
+    var what = bits.length ? bits.join(', ') : 'All categories, chains, and cohorts';
+    return n + ' of ' + DATA.board_size + ' protocols. ' + what + '. Rank is fixed by implied value; sorting does not reassign it.';
   }
 
   function th(label, key, numeric) {
@@ -427,8 +426,9 @@
       th('#', 'rank', true),
       th('Protocol', 'name', false),
       th('Category', 'category', false),
+      th('Chain', 'primary_chain', false),
       th('TVL', 'tvl_usd', true),
-      th('7d', 'change_7d', true),
+      th('7-day', 'change_7d', true),
       th('Age', 'age_days', true),
       th('Multiple', 'combined', true),
       th('Implied', 'implied_value_usd', true)
@@ -443,10 +443,10 @@
         h('td', { class: r.rank <= 3 ? 'rank top' : 'rank', text: String(r.rank) }),
         h('td', null,
           h('span', { class: r.cohort === 'watchlist' ? 'sq' : 'sq-o' }),
-          h('span', { class: 'name', text: r.name }),
-          h('span', { class: 'slug', text: r.slug })
+          h('span', { class: 'name', text: r.name })
         ),
         h('td', { text: r.category || 'Uncategorized' }),
+        h('td', { text: r.primary_chain + (r.chains.length > 1 ? ' +' + (r.chains.length - 1) : '') }),
         h('td', { class: 'num', text: fmtUsd(r.tvl_usd) }),
         pctCell(r.change_7d),
         h('td', { class: 'num muted', text: fmtAge(r.age_days) }),
@@ -560,23 +560,22 @@
     }
     app.textContent = '';
     var wrap = h('main', { class: 'wrap', id: 'app-main' },
-      header(),
+      header(state.view === 'detail'),
       state.view === 'detail'
-        ? h('section', { class: 'method' },
-            h('p', { class: 'formula', text: 'implied = round(TVL × peerMultiple × growthMult × maturityMult × chainMult)' }),
-            h('p', { class: 'runline', text: runLine() })
+        ? h('section', { class: 'method tight' },
+            h('p', { class: 'formula', text: 'implied = round(TVL × peerMultiple × growthMult × maturityMult × chainMult)' })
           )
         : method(),
-      tabs(),
+      state.view === 'detail' ? null : tabs(),
       state.view === 'board' ? toolbar() : null,
-      state.view === 'board' ? h('p', { class: 'count', text: describeFilters(rows.length) }) : null,
+      state.view === 'board' ? h('p', { class: rows.length === DATA.board_size && !state.q ? 'count' : 'count on', text: describeFilters(rows.length) }) : null,
       state.view === 'board' && rows.length === 0 ? h('p', { class: 'empty', text: 'No protocol matches these filters.' }) : null,
       state.view === 'board' && rows.length ? boardTable(rows) : null,
       state.view === 'detail' && selected ? detail(selected) : null,
       state.view === 'detail' && !selected ? h('p', { class: 'empty', text: 'That slug is not on the board.' }) : null,
       state.view === 'live' ? h('p', { class: 'banner', text: 'These tokens already trade. Their market cap / TVL, after a winsor and a shrink, is what prices a pre-token protocol in the same category. They are not ranked and they are not launch candidates.' }) : null,
       state.view === 'live' ? liveTable() : null,
-      footer()
+      state.view === 'detail' ? null : footer()
     );
     app.appendChild(wrap);
     if (focusSearch && state.view === 'board') {

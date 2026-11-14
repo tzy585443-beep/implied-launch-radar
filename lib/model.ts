@@ -386,6 +386,7 @@ export function buildBoard(snapshot: Snapshot): { rows: BoardRow[]; peers: PeerM
         category: p.category,
         chains: p.chains,
         tvl_usd: p.tvl_usd,
+        change_7d: p.change_7d,
         age_days: age,
       }),
     };
