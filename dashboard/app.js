@@ -522,6 +522,13 @@
     );
   }
 
+  // Same exclusion the model uses before it computes a category multiple.
+  function inPeerSample(category) {
+    if (category === 'CEX' || category === 'Liquid Staking' || category === 'Liquid Restaking' || category === 'Restaked BTC') return false;
+    if (category && /\bbridge\b/i.test(category)) return false;
+    return true;
+  }
+
   function liveTable() {
     var rows = DATA.live.slice().sort(function (a, b) { return b.mcap_usd - a.mcap_usd || (a.slug < b.slug ? -1 : 1); });
     return h('table', null,
@@ -535,7 +542,10 @@
       )),
       h('tbody', null, rows.map(function (r) {
         return h('tr', null,
-          h('td', null, h('span', { class: 'name', text: r.name }), h('span', { class: 'slug', text: (r.symbol || '') + ' ' + r.slug })),
+          h('td', null,
+            h('span', { class: 'name', text: r.name }),
+            h('span', { class: 'slug', text: (r.symbol ? r.symbol + ' · ' : '') + r.slug + (inPeerSample(r.category) ? '' : ' · not in the peer sample') })
+          ),
           h('td', { text: r.category || 'Uncategorized' }),
           h('td', { class: 'num', text: fmtUsd(r.tvl_usd) }),
           h('td', { class: 'num', text: fmtUsd(r.mcap_usd) }),
@@ -573,7 +583,7 @@
       state.view === 'board' && rows.length ? boardTable(rows) : null,
       state.view === 'detail' && selected ? detail(selected) : null,
       state.view === 'detail' && !selected ? h('p', { class: 'empty', text: 'That slug is not on the board.' }) : null,
-      state.view === 'live' ? h('p', { class: 'banner', text: 'These tokens already trade. Their market cap / TVL, after a winsor and a shrink, is what prices a pre-token protocol in the same category. They are not ranked and they are not launch candidates.' }) : null,
+      state.view === 'live' ? h('p', { class: 'banner', text: 'These protocols already record a token, sorted by market cap. They are not ranked. Peer multiples drop exchanges, bridges, liquid staking, liquid restaking, and restaked BTC, then winsorize market-cap / TVL and shrink it toward the global median.' }) : null,
       state.view === 'live' ? liveTable() : null,
       state.view === 'detail' ? null : footer()
     );
